@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 180" fill="none" role="img" aria-label="键盘与书">
+  <!-- 书签丝带(橙色,连接书与键盘) -->
+  <polygon points="165,33 175,33 175,95 170,88 165,95" fill="#e89a2c"/>
+
+  <!-- 打开的书 -->
+  <g stroke="#eef2fb" stroke-width="3" stroke-linejoin="round">
+    <path d="M170 36 C 144 26, 104 26, 84 38 L 84 74 C 104 64, 144 64, 170 74 Z"/>
+    <path d="M170 36 C 196 26, 236 26, 256 38 L 256 74 C 236 64, 196 64, 170 74 Z"/>
+  </g>
+  <line x1="170" y1="36" x2="170" y2="74" stroke="#eef2fb" stroke-width="2.5"/>
+  <!-- 书页文字线 -->
+  <g stroke="#93a8d6" stroke-width="2" stroke-linecap="round" opacity="0.9">
+    <line x1="100" y1="45" x2="150" y2="42"/>
+    <line x1="98"  y1="53" x2="152" y2="51"/>
+    <line x1="100" y1="61" x2="148" y2="60"/>
+    <line x1="190" y1="42" x2="242" y2="45"/>
+    <line x1="188" y1="51" x2="244" y2="53"/>
+    <line x1="192" y1="60" x2="242" y2="61"/>
+  </g>
+
+  <!-- 键盘外壳 -->
+  <rect x="46" y="92" width="248" height="72" rx="12"
+        fill="#ffffff" fill-opacity="0.05" stroke="#d6deef" stroke-width="3"/>
+
+  <!-- 键帽 -->
+  <g fill="#ffffff" fill-opacity="0.10" stroke="#aebde0" stroke-width="1.2">
+    <rect x="64"  y="100" width="16" height="12" rx="3"/><rect x="85"  y="100" width="16" height="12" rx="3"/>
+    <rect x="106" y="100" width="16" height="12" rx="3"/><rect x="127" y="100" width="16" height="12" rx="3"/>
+    <rect x="148" y="100" width="16" height="12" rx="3"/><rect x="169" y="100" width="16" height="12" rx="3"/>
+    <rect x="190" y="100" width="16" height="12" rx="3"/><rect x="211" y="100" width="16" height="12" rx="3"/>
+    <rect x="232" y="100" width="16" height="12" rx="3"/><rect x="253" y="100" width="16" height="12" rx="3"/>
+
+    <rect x="64"  y="117" width="16" height="12" rx="3"/><rect x="85"  y="117" width="16" height="12" rx="3"/>
+    <rect x="106" y="117" width="16" height="12" rx="3"/><rect x="127" y="117" width="16" height="12" rx="3"/>
+    <rect x="148" y="117" width="16" height="12" rx="3"/><rect x="169" y="117" width="16" height="12" rx="3"/>
+    <rect x="190" y="117" width="16" height="12" rx="3"/><rect x="211" y="117" width="16" height="12" rx="3"/>
+    <rect x="232" y="117" width="16" height="12" rx="3"/><rect x="253" y="117" width="16" height="12" rx="3"/>
+
+    <rect x="74"  y="134" width="16" height="12" rx="3"/><rect x="95"  y="134" width="16" height="12" rx="3"/>
+    <rect x="116" y="134" width="16" height="12" rx="3"/><rect x="137" y="134" width="16" height="12" rx="3"/>
+    <rect x="158" y="134" width="16" height="12" rx="3"/><rect x="179" y="134" width="16" height="12" rx="3"/>
+    <rect x="200" y="134" width="16" height="12" rx="3"/><rect x="221" y="134" width="16" height="12" rx="3"/>
+  </g>
+  <!-- 空格键 -->
+  <rect x="120" y="151" width="100" height="9" rx="4"
+        fill="#ffffff" fill-opacity="0.10" stroke="#aebde0" stroke-width="1.2"/>
+</svg>

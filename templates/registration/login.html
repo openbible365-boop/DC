@@ -38,8 +38,7 @@
     .brand h1 { font-family: "Sora", sans-serif; font-size: 2.5rem; line-height: 1.15; margin: 10px 0 14px; font-weight: 800; }
     .brand h1 .hl { color: #f0a94a; }
     .brand p.desc { color: #b7bed8; font-size: .95rem; line-height: 1.7; max-width: 30ch; margin: 0; }
-    .bars { display: flex; align-items: flex-end; gap: 5px; height: 70px; margin: 30px 0 26px; }
-    .bars i { flex: 1; background: linear-gradient(180deg, #7fa8ff, #294067); border-radius: 3px; opacity: .9; }
+    .art { display: block; width: 100%; max-width: 330px; height: auto; margin: 26px 0 22px; }
     .stats { display: flex; gap: 26px; }
     .stats .num { font-family: "Sora", sans-serif; font-size: 1.5rem; font-weight: 800; }
     .stats .lbl { font-size: .74rem; color: #9aa3c7; margin-top: 2px; }
@@ -90,14 +89,7 @@
         <div class="eyebrow">BIBLE DATA PLATFORM</div>
         <h1>数据<span class="hl">收集</span>平台</h1>
         <p class="desc">为训练贴切解释圣经的 AI,在此收集、标注、审核、导出高质量数据集。多语言 · 多模型 · 专家协作。</p>
-        <div class="bars">
-          <i style="height:40%"></i><i style="height:62%"></i><i style="height:48%"></i><i style="height:80%"></i>
-          <i style="height:55%"></i><i style="height:92%"></i><i style="height:60%"></i><i style="height:74%"></i>
-          <i style="height:45%"></i><i style="height:85%"></i><i style="height:52%"></i><i style="height:68%"></i>
-          <i style="height:96%"></i><i style="height:58%"></i><i style="height:78%"></i><i style="height:50%"></i>
-          <i style="height:64%"></i><i style="height:88%"></i><i style="height:44%"></i><i style="height:72%"></i>
-          <i style="height:56%"></i><i style="height:82%"></i><i style="height:48%"></i><i style="height:66%"></i>
-        </div>
+        <img class="art" src="{% static 'img/keyboard-book.svg' %}" alt="键盘与书">
         <div class="stats">
           <div><div class="num">3+</div><div class="lbl">起步语言</div></div>
           <div><div class="num">RAG</div><div class="lbl">导出就绪</div></div>
