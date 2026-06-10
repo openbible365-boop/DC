@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="zh-Hans">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}数据收集协作平台{% endblock %}</title>
+  <link rel="icon" href="{% static 'img/ezra-favicon.svg' %}">
   <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <style>
