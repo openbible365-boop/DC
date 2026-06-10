@@ -5,71 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}数据收集协作平台{% endblock %}</title>
   <link rel="icon" href="{% static 'img/ezra-favicon.svg' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Sora:wght@700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
-           max-width: 960px; margin: 0 auto; padding: 1.5rem; line-height: 1.6; }
-    header { display: flex; justify-content: space-between; align-items: center;
-             border-bottom: 1px solid #8884; padding-bottom: .75rem; margin-bottom: 1.5rem; }
-    header a { text-decoration: none; }
-    nav.top a { margin-right: .75rem; }
-    .muted { color: #8888; font-size: .9rem; }
-    .card { border: 1px solid #8884; border-radius: 8px; padding: 1.25rem; margin: 1rem 0; }
+    :root {
+      --indigo: #1c2b4a; --indigo-2: #213a63; --blue: #2f5fd0; --orange: #e89a2c;
+      --ink: #1f2430; --muted: #8a90a2; --line: #e6e8ef; --bg: #f4f6fb;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+           font-family: "Noto Sans SC", system-ui, -apple-system, "PingFang SC", sans-serif; line-height: 1.6; }
+
+    /* ===== 顶部品牌栏 ===== */
+    .topbar { background: linear-gradient(100deg, var(--indigo) 0%, var(--indigo-2) 100%); color: #fff; }
+    .topbar-inner { max-width: 1080px; margin: 0 auto; padding: .7rem 1.5rem;
+                    display: flex; align-items: center; gap: 1.25rem; }
+    .brand-link { display: flex; align-items: center; gap: 9px; text-decoration: none; color: #fff; }
+    .brand-link img { width: 30px; height: 30px; }
+    .brand-link b { font-family: "Sora", "Noto Sans SC", sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: .2px; }
+    .topnav { margin-left: auto; display: flex; align-items: center; gap: 1.05rem; flex-wrap: wrap; }
+    .topnav a { color: rgba(255,255,255,.86); text-decoration: none; font-size: .92rem; transition: color .12s; }
+    .topnav a:hover { color: var(--orange); }
+    .topnav .who { color: rgba(255,255,255,.55); font-size: .85rem; }
+    .topnav .logout { background: none; border: 0; color: rgba(255,255,255,.86); cursor: pointer; font: inherit; font-size: .92rem; padding: 0; }
+    .topnav .logout:hover { color: var(--orange); }
+    .nbell { position: relative; }
+    .nbell .dot { position: absolute; top: -7px; right: -10px; background: var(--orange); color: #1c2b4a;
+                  font-size: .68rem; font-weight: 700; border-radius: 999px; padding: 0 5px; min-width: 16px; text-align: center; }
+
+    /* ===== 内容容器 ===== */
+    .container { max-width: 1000px; margin: 0 auto; padding: 1.5rem; }
+    h1 { font-family: "Sora", "Noto Sans SC", sans-serif; }
+    a { color: var(--blue); }
+    .muted { color: var(--muted); font-size: .9rem; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 1.25rem; margin: 1rem 0;
+            box-shadow: 0 1px 3px rgba(30,40,80,.04); }
     label { display: block; margin: .75rem 0 .2rem; font-weight: 600; }
-    input, select, textarea { width: 100%; padding: .5rem; box-sizing: border-box;
-            border: 1px solid #8886; border-radius: 6px; font-family: inherit; font-size: 1rem; }
-    button, .btn { padding: .5rem 1rem; border-radius: 6px; border: 0; background: #2563eb;
-             color: #fff; cursor: pointer; font-size: 1rem; text-decoration: none; display: inline-block; }
-    .btn-ghost { background: #8882; color: inherit; }
+    input, select, textarea { width: 100%; padding: .55rem; box-sizing: border-box;
+            border: 1px solid #d8dce6; border-radius: 8px; font-family: inherit; font-size: 1rem; background: #fff; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); }
+    button, .btn { padding: .55rem 1.1rem; border-radius: 8px; border: 0; cursor: pointer; font-size: 1rem;
+            text-decoration: none; display: inline-block; color: #fff;
+            background: linear-gradient(135deg, #2952c4 0%, #3f6fd0 100%); }
+    button:hover, .btn:hover { filter: brightness(1.05); }
+    .btn-ghost { background: #eef1f7; color: var(--ink); }
     .errorlist { color: #dc2626; list-style: none; padding: 0; margin: .25rem 0; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: .55rem .5rem; border-bottom: 1px solid #8883; }
-    th { font-size: .85rem; color: #8889; }
+    th, td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--line); }
+    th { font-size: .82rem; color: var(--muted); font-weight: 600; }
     .filters { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; }
     .filters > div { flex: 0 0 auto; }
-    .badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px;
-             font-size: .8rem; background: #8882; }
+    .badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .8rem; background: #e7eaf1; }
     .badge.draft { background: #9ca3af33; }
     .badge.pending_annotation { background: #f59e0b33; }
     .badge.annotated { background: #3b82f633; }
     .badge.in_review { background: #a855f733; }
     .badge.approved { background: #22c55e33; }
     .badge.exported { background: #06b6d433; }
-    .msg { padding: .6rem .9rem; border-radius: 6px; background: #22c55e22; margin: .5rem 0; }
-    .msg.error { background: #dc262622; }
-    .help { font-size: .82rem; color: #8889; margin: .15rem 0 0; }
+    .msg { padding: .65rem .95rem; border-radius: 8px; background: #e7f6ec; color: #1e7e4a; margin: .6rem 0;
+           border: 1px solid #bfe6cd; }
+    .msg.error { background: #fdeaea; color: #c0392b; border-color: #f3c0c0; }
+    .help { font-size: .82rem; color: var(--muted); margin: .15rem 0 0; }
   </style>
 </head>
 <body>
-  <header>
-    <a href="{% url 'home' %}"><strong>数据收集协作平台</strong></a>
-    <nav class="top muted">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <a class="brand-link" href="{% url 'home' %}">
+        <img src="{% static 'img/ezra-logo.svg' %}" alt="Ezra">
+        <b>数据收集平台</b>
+      </a>
       {% if user.is_authenticated %}
+      <nav class="topnav">
         <a href="{% url 'corpus:document_list' %}">资料库</a>
-        <a href="{% url 'corpus:document_create' %}">＋上传资料</a>
+        <a href="{% url 'corpus:document_create' %}">＋上传</a>
         <a href="{% url 'corpus:task_list' %}">任务</a>
         {% if user.is_superuser or user.role == 'admin' or user.role == 'lead' %}
-          <a href="{% url 'corpus:review_queue' %}">审核队列</a>
+          <a href="{% url 'corpus:review_queue' %}">审核</a>
         {% endif %}
-        <a href="{% url 'corpus:notification_list' %}">🔔{% if unread_count %} <span class="badge" style="background:#dc2626;color:#fff">{{ unread_count }}</span>{% endif %}</a>
         {% if user.is_superuser or user.role == 'admin' or user.role == 'tech' %}
           <a href="{% url 'corpus:export_page' %}">导出</a>
         {% endif %}
-        <a href="{% url 'admin:index' %}">管理后台</a>
-        <span>{{ user.get_full_name|default:user.username }}（{{ user.get_role_display }}）</span>
-        <form action="{% url 'logout' %}" method="post" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;color:#2563eb;padding:0">登出</button></form>
+        <a class="nbell" href="{% url 'corpus:notification_list' %}">🔔{% if unread_count %}<span class="dot">{{ unread_count }}</span>{% endif %}</a>
+        <a href="{% url 'admin:index' %}">后台</a>
+        <span class="who">{{ user.get_full_name|default:user.username }} · {{ user.get_role_display }}</span>
+        <form action="{% url 'logout' %}" method="post" style="display:inline">{% csrf_token %}<button type="submit" class="logout">登出</button></form>
+      </nav>
       {% endif %}
-    </nav>
-  </header>
+    </div>
+  </div>
 
-  {% if messages %}
-    {% for m in messages %}
-      <div class="msg {% if m.tags %}{{ m.tags }}{% endif %}">{{ m }}</div>
-    {% endfor %}
-  {% endif %}
+  <div class="container">
+    {% if messages %}
+      {% for m in messages %}
+        <div class="msg {% if m.tags %}{{ m.tags }}{% endif %}">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
 
-  {% block content %}{% endblock %}
+    {% block content %}{% endblock %}
+  </div>
 </body>
 </html>
