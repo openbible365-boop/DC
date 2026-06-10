@@ -8,4 +8,5 @@ dependencies = [
     "gunicorn>=26.0.0",
     "psycopg[binary]>=3.3.4",
     "redis>=5",
+    "whitenoise>=6.12.0",
 ]

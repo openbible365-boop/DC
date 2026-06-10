@@ -1,3 +1,5 @@
+# DC 与已有的 ko-tts 共存:不占用 80/443,由现有的 Caddy 反代到 web。
+# web 同时接入 DC 内部网络与 ko-tts 的网络(供 Caddy 按容器名 dc-web 访问)。
 services:
   db:
     image: postgres:16
@@ -8,6 +10,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dc-internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 5s
@@ -17,6 +21,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
+    networks:
+      - dc-internal
 
   web:
     build: .
@@ -25,15 +31,17 @@ services:
     environment:
       RUN_MIGRATIONS: "1"
     volumes:
-      - static_volume:/app/staticfiles
       - media_volume:/app/media
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
-    expose:
-      - "8000"
+    networks:
+      dc-internal:
+      caddy-net:
+        aliases:
+          - dc-web        # Caddyfile 里用 reverse_proxy dc-web:8000
 
   worker:
     build: .
@@ -45,34 +53,17 @@ services:
     depends_on:
       - db
       - redis
+    networks:
+      - dc-internal
 
-  nginx:
-    image: nginx:alpine
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
-      - static_volume:/app/staticfiles:ro
-      - media_volume:/app/media:ro
-      - certbot_certs:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    depends_on:
-      - web
-
-  certbot:
-    image: certbot/certbot
-    restart: unless-stopped
-    volumes:
-      - certbot_certs:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    # 每 12 小时尝试续期
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
+networks:
+  dc-internal:
+    driver: bridge
+  # 复用 ko-tts 已创建的网络(Caddy 在其中)
+  caddy-net:
+    external: true
+    name: ko-tts_ko-tts-net
 
 volumes:
   postgres_data:
-  static_volume:
   media_volume:
-  certbot_certs:
-  certbot_www:
