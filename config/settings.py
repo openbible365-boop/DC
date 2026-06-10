@@ -10,23 +10,36 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+def env_bool(key, default="0"):
+    return os.environ.get(key, default).lower() in ("1", "true", "yes", "on")
 
+
+def env_list(key, default=""):
+    return [x.strip() for x in os.environ.get(key, default).split(",") if x.strip()]
+
+
+# 生产环境通过环境变量注入;开发环境用内置默认值。
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-z+^&jsqc3ev46)&v3kyw(ug!k0wiwri8+e4=ro2@2b(%^l-exy'
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-z+^&jsqc3ev46)&v3kyw(ug!k0wiwri8+e4=ro2@2b(%^l-exy",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool("DEBUG", "1")  # 开发默认开;生产设 DEBUG=0
 
-# 开发环境放开;生产务必收紧为实际域名
-ALLOWED_HOSTS = ["*"]
+# 开发默认放开;生产由 ALLOWED_HOSTS 环境变量收紧为实际域名
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "*") if not DEBUG else ["*"]
+
+# HTTPS 下 Django 需要可信来源做 CSRF 校验
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
 
 
 # Application definition
@@ -81,12 +94,26 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# 设置了 POSTGRES_DB 则用 PostgreSQL(生产),否则用 SQLite(开发)
+if os.environ.get("POSTGRES_DB"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ["POSTGRES_DB"],
+            "USER": os.environ.get("POSTGRES_USER", "postgres"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
+            "HOST": os.environ.get("POSTGRES_HOST", "db"),
+            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+            "CONN_MAX_AGE": 60,
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation
@@ -142,8 +169,6 @@ LOGOUT_REDIRECT_URL = '/accounts/login/'
 LOGIN_URL = '/accounts/login/'
 
 # Celery(异步任务:注释书自动拆分、音视频转录等)
-import os  # noqa: E402
-
 CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 CELERY_TASK_TRACK_STARTED = True
@@ -151,3 +176,15 @@ CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_TIMEZONE = TIME_ZONE
 # 开发期可设为同步执行(无需 worker),调试方便:export CELERY_TASK_ALWAYS_EAGER=1
 CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_TASK_ALWAYS_EAGER') == '1'
+
+
+# ============ 生产安全设置(仅 DEBUG=0 生效)============
+if not DEBUG:
+    # 位于 Nginx 反向代理之后,经 X-Forwarded-Proto 识别 HTTPS
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 2592000          # 30 天
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
