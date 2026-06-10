@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}导出训练集 · 数据收集协作平台{% endblock %}
+
+{% block content %}
+<h1>导出训练集</h1>
+<p class="muted">按目标模型筛选「已通过」条目,导出为 JSONL(规格书 §6 格式),可用于 RAG 知识库 / 微调。
+  全库已通过条目共 <strong>{{ total_approved }}</strong> 条。</p>
+
+<form method="get" action="{% url 'corpus:export_download' %}" class="card">
+  <label for="model">目标模型</label>
+  <select name="model" id="model">
+    <option value="">全部已通过(不限模型)— {{ total_approved }} 条</option>
+    {% for m in models %}
+      <option value="{{ m.id }}">{{ m.name }}（{{ m.code }}）— {{ m.approved_count }} 条</option>
+    {% endfor %}
+  </select>
+
+  <label style="margin-top:1rem">
+    <input type="checkbox" name="include_disputed" checked style="width:auto"> 包含标记为「争议」的条目
+  </label>
+
+  <div style="margin-top:1.25rem">
+    <button type="submit">⬇ 下载 JSONL</button>
+  </div>
+</form>
+
+<div class="card">
+  <h3>各模型可导出量</h3>
+  <table>
+    <thead><tr><th>模型</th><th>代号</th><th>语言</th><th>已通过条目</th></tr></thead>
+    <tbody>
+      {% for m in models %}
+        <tr>
+          <td>{{ m.name }}</td>
+          <td class="muted">{{ m.code }}</td>
+          <td>{{ m.get_language_display }}</td>
+          <td>{{ m.approved_count }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="muted">尚无启用的模型。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3 class="muted">导出格式示例(每行一条 JSON)</h3>
+  <pre style="white-space:pre-wrap; font-size:.82rem; color:#8889">{"id": "uuid", "verse_ref": "约3:16", "verse_text": "...", "commentary": "...", "source": "马太亨利注释·约翰福音卷", "content_language": "zh", "tradition": "改革宗", "tags": ["救恩"], "quality_score": 0.9, "disputed": false, "target_models": ["zh_henry"], "translation_group": null}</pre>
+</div>
+{% endblock %}

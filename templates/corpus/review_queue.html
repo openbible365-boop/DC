@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}审核队列 · 数据收集协作平台{% endblock %}
+
+{% block content %}
+<style>
+  .conf { font-size: .8rem; padding: .1rem .5rem; border-radius: 999px; }
+  .conf.high { background: #22c55e33; }
+  .conf.mid  { background: #eab30833; }
+  .conf.low  { background: #f9731633; }
+  .conf.none { background: #8882; }
+</style>
+
+<h1>审核队列 <span class="muted">（{{ total }} 条待审）</span></h1>
+<p class="muted">置信度:<span class="conf high">高 ≥0.8</span> <span class="conf mid">中</span>
+   <span class="conf low">可疑 &lt;0.5 / ⚠需检查</span>。可勾选后批量通过本页。</p>
+
+{% if groups %}
+<form method="post">
+  {% csrf_token %}
+  {% for g in groups %}
+    <div class="card">
+      <h3 style="margin-top:0">
+        <a href="{% url 'corpus:document_detail' g.doc.pk %}">{{ g.doc.title }}</a>
+        <span class="muted">· {{ g.doc.get_content_language_display }} · {{ g.entries|length }} 条</span>
+      </h3>
+      <table>
+        <thead><tr><th><input type="checkbox" onclick="document.querySelectorAll('.cb-{{ g.doc.pk }}').forEach(c=>c.checked=this.checked)"></th>
+          <th>#</th><th>经文</th><th>置信度</th><th>标记</th><th>标注者</th><th></th></tr></thead>
+        <tbody>
+          {% for e in g.entries %}
+            <tr>
+              <td><input type="checkbox" name="entry_ids" value="{{ e.pk }}" class="cb-{{ g.doc.pk }}"></td>
+              <td>{{ e.order }}</td>
+              <td>{{ e.verse_ref }}</td>
+              <td>
+                {% if e.ai_confidence is None %}<span class="conf none">—</span>
+                {% elif e.ai_confidence >= 0.8 %}<span class="conf high">{{ e.ai_confidence }}</span>
+                {% elif e.ai_confidence >= 0.5 %}<span class="conf mid">{{ e.ai_confidence }}</span>
+                {% else %}<span class="conf low">{{ e.ai_confidence }}</span>{% endif %}
+              </td>
+              <td class="muted">{% if e.needs_attention %}⚠需检查 {% endif %}{% if e.disputed %}⚑争议 {% endif %}{% if e.auto_generated %}🤖自动{% endif %}</td>
+              <td class="muted">{{ e.annotated_by.get_full_name|default:e.annotated_by.username|default:"—" }}</td>
+              <td><a href="{% url 'corpus:review_entry' e.pk %}">审核 →</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+  <div style="margin:1rem 0">
+    <button type="submit" name="action" value="batch_approve"
+            onclick="return confirm('确认批量通过所勾选条目?')">✓ 批量通过所勾选</button>
+  </div>
+</form>
+{% else %}
+  <div class="card"><p class="muted">审核队列为空 🎉 当前没有待审核的条目。</p></div>
+{% endif %}
+{% endblock %}

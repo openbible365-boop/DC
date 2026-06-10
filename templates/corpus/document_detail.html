@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.title }} · 数据收集协作平台{% endblock %}
+
+{% block content %}
+  <p class="muted"><a href="{% url 'corpus:document_list' %}">← 返回资料库</a></p>
+  <div style="display:flex; justify-content:space-between; align-items:start">
+    <h1>{{ doc.title }}</h1>
+    <span class="badge {{ doc.status }}">{{ doc.get_status_display }}</span>
+  </div>
+
+  <div class="card">
+    <table>
+      <tr><th>来源类型</th><td>{{ doc.get_source_type_display }}</td>
+          <th>资料语言</th><td>{{ doc.get_content_language_display }}</td></tr>
+      <tr><th>作者</th><td>{{ doc.author|default:"—" }}</td>
+          <th>日期</th><td>{{ doc.date|default:"—" }}</td></tr>
+      <tr><th>神学传统</th><td>{{ doc.tradition|default:"—" }}</td>
+          <th>翻译组</th><td>{{ doc.translation_group|default:"—" }}</td></tr>
+      <tr><th>目标模型</th><td colspan="3">
+        {% for m in doc.target_models.all %}<span class="badge">{{ m.name }}（{{ m.code }}）</span> {% empty %}—{% endfor %}
+      </td></tr>
+      <tr><th>原始文件</th><td colspan="3">
+        {% if doc.raw_file %}<a href="{{ doc.raw_file.url }}">{{ doc.raw_file.name }}</a>{% else %}—{% endif %}
+      </td></tr>
+    </table>
+  </div>
+
+  {% if doc.raw_text %}
+    <div class="card">
+      <h3>全文</h3>
+      <div style="white-space:pre-wrap; max-height:320px; overflow:auto">{{ doc.raw_text }}</div>
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <h3 style="margin:0">条目（{{ entries|length }}）</h3>
+      <a class="btn" href="{% url 'corpus:entry_create' doc.pk %}">＋ 新增条目</a>
+    </div>
+    {% if entries %}
+      <table style="margin-top:.75rem">
+        <thead><tr><th>#</th><th>经文</th><th>状态</th><th>质量</th><th>标记</th><th></th></tr></thead>
+        <tbody>
+          {% for e in entries %}
+            <tr>
+              <td>{{ e.order }}</td>
+              <td><a href="{% url 'corpus:entry_edit' e.pk %}">{{ e.verse_ref }}</a></td>
+              <td><span class="badge {{ e.status }}">{{ e.get_status_display }}</span></td>
+              <td>{{ e.quality_score|default:"—" }}</td>
+              <td class="muted">{% if e.needs_attention %}⚠需检查 {% endif %}{% if e.disputed %}⚑争议 {% endif %}{% if e.auto_generated %}🤖自动{% endif %}</td>
+              <td><a href="{% url 'corpus:entry_edit' e.pk %}">标注 →</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted" style="margin-top:.75rem">尚无条目。点「＋ 新增条目」开始逐条标注,或后续由自动拆分生成。</p>
+    {% endif %}
+  </div>
+{% endblock %}

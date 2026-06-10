@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}标注工作台 · {{ doc.title }}{% endblock %}
+
+{% block content %}
+<style>
+  .wb { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+  .wb .source { position: sticky; top: 1rem; max-height: 80vh; overflow: auto; }
+  .source pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
+  .entry-nav a { display: inline-block; padding: .1rem .45rem; margin: .1rem; border-radius: 5px;
+                 font-size: .8rem; background: #8882; text-decoration: none; }
+  .entry-nav a.cur { background: #2563eb; color: #fff; }
+  .tag-chip { cursor: pointer; padding: .1rem .5rem; border-radius: 999px; background: #2563eb22;
+              font-size: .82rem; margin: .15rem; display: inline-block; }
+  @media (max-width: 760px) { .wb { grid-template-columns: 1fr; } .wb .source { position: static; max-height: 40vh; } }
+</style>
+
+<p class="muted"><a href="{% url 'corpus:document_detail' doc.pk %}">← {{ doc.title }}</a></p>
+<h1>{% if entry %}编辑标注{% else %}新增标注{% endif %}</h1>
+
+{% if entries %}
+  <div class="entry-nav muted">本资料条目:
+    {% for e in entries %}
+      <a href="{% url 'corpus:entry_edit' e.pk %}" class="{% if entry and e.pk == entry.pk %}cur{% endif %}"
+         title="{{ e.get_status_display }}">{{ forloop.counter }}.{{ e.verse_ref }}</a>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="wb">
+  <!-- 左:原文 -->
+  <div class="card source">
+    <h3>原文</h3>
+    {% if doc.raw_text %}
+      <pre>{{ doc.raw_text }}</pre>
+    {% else %}
+      <p class="muted">该资料暂无正文(可能为待转录的音视频,或文件尚未提取)。</p>
+    {% endif %}
+  </div>
+
+  <!-- 右:标注表单 -->
+  <form method="post" class="card" x-data="{ tags: '{{ form.tags_text.value|default:'' }}' }">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    {% endif %}
+
+    <label for="{{ form.verse_ref.id_for_label }}">经文引用 <span style="color:#dc2626">*</span></label>
+    {{ form.verse_ref }}
+    {% for e in form.verse_ref.errors %}<div class="errorlist">{{ e }}</div>{% endfor %}
+
+    <label for="{{ form.verse_text.id_for_label }}">经文</label>
+    {{ form.verse_text }}
+
+    <label for="{{ form.commentary.id_for_label }}">精炼注释 <span style="color:#dc2626">*</span></label>
+    {{ form.commentary }}
+    {% for e in form.commentary.errors %}<div class="errorlist">{{ e }}</div>{% endfor %}
+
+    <label for="{{ form.tags_text.id_for_label }}">主题标签</label>
+    <input type="text" name="tags_text" id="{{ form.tags_text.id_for_label }}"
+           x-model="tags" placeholder="用逗号分隔,如:救恩, 神的爱">
+    {% if suggested_tags %}
+      <div class="help">推荐标签(点击添加):
+        {% for t in suggested_tags %}
+          <span class="tag-chip" @click="tags = (tags.trim() ? tags.replace(/,\s*$/,'') + ', ' : '') + '{{ t }}'">＋{{ t }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div style="display:flex; gap:1rem; align-items:end">
+      <div style="flex:1">
+        <label for="{{ form.quality_score.id_for_label }}">质量评分(0~1)</label>
+        {{ form.quality_score }}
+        {% for e in form.quality_score.errors %}<div class="errorlist">{{ e }}</div>{% endfor %}
+      </div>
+      <div style="flex:1">
+        <label>{{ form.disputed }} 标记为争议内容</label>
+      </div>
+    </div>
+
+    <div style="margin-top:1.25rem; display:flex; gap:.5rem; flex-wrap:wrap">
+      <button type="submit" name="action" value="draft" class="btn-ghost">存草稿</button>
+      <button type="submit" name="action" value="submit">提交审核</button>
+      {% if next_entry %}
+        <a class="btn btn-ghost" href="{% url 'corpus:entry_edit' next_entry.pk %}">跳过 →</a>
+      {% else %}
+        <a class="btn btn-ghost" href="{% url 'corpus:document_detail' doc.pk %}">跳过 →</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

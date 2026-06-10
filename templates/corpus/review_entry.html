@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}审核 · {{ entry.verse_ref }}{% endblock %}
+
+{% block content %}
+<style>
+  .wb { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+  .wb .source { position: sticky; top: 1rem; max-height: 80vh; overflow: auto; }
+  .source pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
+  @media (max-width: 760px) { .wb { grid-template-columns: 1fr; } .wb .source { position: static; } }
+</style>
+
+<p class="muted"><a href="{% url 'corpus:review_queue' %}">← 审核队列</a> ·
+  <a href="{% url 'corpus:document_detail' doc.pk %}">{{ doc.title }}</a></p>
+<h1>审核条目 <span class="badge {{ entry.status }}">{{ entry.get_status_display }}</span></h1>
+<p class="muted">标注者:{{ entry.annotated_by.get_full_name|default:entry.annotated_by.username|default:"—" }}
+  {% if entry.ai_confidence is not None %} · AI置信度 {{ entry.ai_confidence }}{% endif %}
+  {% if entry.needs_attention %} · <span style="color:#f97316">⚠系统标记需重点检查</span>{% endif %}</p>
+
+<div class="wb">
+  <!-- 左:原文 -->
+  <div class="card source">
+    <h3>原文</h3>
+    {% if doc.raw_text %}<pre>{{ doc.raw_text }}</pre>
+    {% else %}<p class="muted">无正文。</p>{% endif %}
+  </div>
+
+  <!-- 右:可编辑的标注 + 审核操作 -->
+  <form method="post" class="card">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+
+    <label for="{{ form.verse_ref.id_for_label }}">经文引用</label>
+    {{ form.verse_ref }}
+    <label for="{{ form.verse_text.id_for_label }}">经文</label>
+    {{ form.verse_text }}
+    <label for="{{ form.commentary.id_for_label }}">精炼注释</label>
+    {{ form.commentary }}
+    <label for="{{ form.tags_text.id_for_label }}">主题标签</label>
+    {{ form.tags_text }}
+    <div style="display:flex; gap:1rem; align-items:end">
+      <div style="flex:1">
+        <label for="{{ form.quality_score.id_for_label }}">质量评分</label>
+        {{ form.quality_score }}
+      </div>
+      <div style="flex:1"><label>{{ form.disputed }} 争议内容</label></div>
+    </div>
+
+    <label for="id_comment">批注(打回时必填,通过可选)</label>
+    <textarea name="comment" id="id_comment" rows="3" placeholder="如:此处经文引用有误,请改为约3:16-17"></textarea>
+
+    <div style="margin-top:1.25rem; display:flex; gap:.5rem; flex-wrap:wrap">
+      <button type="submit" name="action" value="approve">✓ 通过</button>
+      <button type="submit" name="action" value="edit" class="btn-ghost">保存修改(留审)</button>
+      <button type="submit" name="action" value="reject" class="btn-ghost"
+              style="background:#dc262622">✗ 打回</button>
+    </div>
+  </form>
+</div>
+
+{% if reviews %}
+  <div class="card">
+    <h3>审核记录</h3>
+    <table>
+      <thead><tr><th>动作</th><th>审核者</th><th>批注</th><th>时间</th></tr></thead>
+      <tbody>
+        {% for r in reviews %}
+          <tr>
+            <td>{{ r.get_action_display }}</td>
+            <td class="muted">{{ r.reviewer.get_full_name|default:r.reviewer.username|default:"—" }}</td>
+            <td>{{ r.comment|default:"—" }}</td>
+            <td class="muted">{{ r.created_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+{% endblock %}

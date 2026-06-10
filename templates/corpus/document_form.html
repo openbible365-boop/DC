@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}上传资料 · 数据收集协作平台{% endblock %}
+
+{% block content %}
+  <h1>上传资料</h1>
+  <p class="muted">填写资料基本信息并选择目标模型。可先「存草稿」,信息齐全后再「提交待标注」。</p>
+
+  <form method="post" enctype="multipart/form-data" class="card">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    {% endif %}
+
+    {% for field in form %}
+      <div>
+        <label for="{{ field.id_for_label }}">
+          {{ field.label }}{% if field.field.required %} <span style="color:#dc2626">*</span>{% endif %}
+        </label>
+        {{ field }}
+        {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+        {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+    {% endfor %}
+
+    <div style="margin-top:1.25rem; display:flex; gap:.5rem">
+      <button type="submit" name="action" value="draft" class="btn-ghost">存草稿</button>
+      <button type="submit" name="action" value="submit">提交待标注</button>
+      <a class="btn btn-ghost" href="{% url 'corpus:document_list' %}">取消</a>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}登录 · 数据收集协作平台{% endblock %}
+
+{% block content %}
+  <h1>登录</h1>
+  {% if form.errors %}
+    <p class="errorlist">用户名或密码不正确，请重试。</p>
+  {% endif %}
+  <form method="post" class="card">
+    {% csrf_token %}
+    <label for="id_username">用户名</label>
+    {{ form.username }}
+    <label for="id_password">密码</label>
+    {{ form.password }}
+    <p><button type="submit">登录</button></p>
+    <input type="hidden" name="next" value="{{ next }}">
+  </form>
+{% endblock %}
