@@ -8,6 +8,7 @@ urlpatterns = [
     path("docs/", views.document_list, name="document_list"),
     path("docs/new/", views.document_create, name="document_create"),
     path("docs/<int:pk>/", views.document_detail, name="document_detail"),
+    path("docs/<int:pk>/autosplit/", views.document_autosplit, name="document_autosplit"),
     # 标注工作台
     path("docs/<int:doc_pk>/entries/new/", views.entry_create, name="entry_create"),
     path("entries/<uuid:pk>/edit/", views.entry_edit, name="entry_edit"),

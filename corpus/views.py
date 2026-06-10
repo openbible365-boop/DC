@@ -458,6 +458,24 @@ def export_download(request):
 # ============ 任务分配(规格书 5.6)============
 
 @login_required
+def document_autosplit(request, pk):
+    """触发某资料的注释书自动拆分(异步,规格书 5.3)。"""
+    doc = get_object_or_404(Document, pk=pk)
+    if request.method != "POST":
+        return redirect("corpus:document_detail", pk=doc.pk)
+    if not doc.raw_text.strip():
+        messages.error(request, "该资料没有正文可拆分。")
+        return redirect("corpus:document_detail", pk=doc.pk)
+
+    from .tasks import auto_split_document
+    auto_split_document.delay(doc.pk, request.user.pk)
+    messages.success(
+        request, "已开始自动拆分,完成后会通知你。可稍后刷新本页查看生成的条目。"
+    )
+    return redirect("corpus:document_detail", pk=doc.pk)
+
+
+@login_required
 def task_list(request):
     """任务页:专家看「我的任务」+「任务池」;管理者另见全部任务与创建入口。"""
     base = Task.objects.select_related("document", "assigned_to", "created_by")

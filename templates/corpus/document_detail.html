@@ -35,7 +35,16 @@
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center">
       <h3 style="margin:0">条目（{{ entries|length }}）</h3>
-      <a class="btn" href="{% url 'corpus:entry_create' doc.pk %}">＋ 新增条目</a>
+      <div style="display:flex; gap:.5rem">
+        {% if doc.raw_text %}
+          <form method="post" action="{% url 'corpus:document_autosplit' doc.pk %}" style="display:inline"
+                onsubmit="return confirm('对本资料正文做自动拆分,生成条目草稿?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost">🤖 自动拆分</button>
+          </form>
+        {% endif %}
+        <a class="btn" href="{% url 'corpus:entry_create' doc.pk %}">＋ 新增条目</a>
+      </div>
     </div>
     {% if entries %}
       <table style="margin-top:.75rem">
