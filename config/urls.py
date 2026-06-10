@@ -4,11 +4,14 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.static import serve as media_serve
 
+from accounts.views import StyledLoginView
 from corpus import views as corpus_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # 内置认证视图:登录/登出/改密等,模板放在 templates/registration/
+    # 自定义登录页(分栏品牌设计 + 记住我),需在 auth.urls 之前以覆盖默认 login
+    path("accounts/login/", StyledLoginView.as_view(), name="login"),
+    # 内置认证视图:登出/改密等,模板放在 templates/registration/
     path("accounts/", include("django.contrib.auth.urls")),
     path("corpus/", include("corpus.urls")),
     path("", corpus_views.dashboard, name="home"),

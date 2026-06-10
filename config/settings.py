@@ -155,6 +155,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'   # collectstatic 输出(生产)
+STATICFILES_DIRS = [BASE_DIR / 'static']  # 项目级静态资源(Logo 等)
 
 # WhiteNoise:压缩 + 带 hash 的静态文件存储
 STORAGES = {

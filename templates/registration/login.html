@@ -1,18 +1,145 @@
-{% extends "base.html" %}
-{% block title %}登录 · 数据收集协作平台{% endblock %}
+{% load static %}<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 · 数据收集协作平台</title>
+  <link rel="icon" href="{% static 'img/ezra-logo.svg' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      font-family: "Noto Sans SC", system-ui, -apple-system, "PingFang SC", sans-serif;
+      background: linear-gradient(135deg, #eef1f6 0%, #e6eaf2 100%); color: #1f2430; padding: 24px;
+    }
+    .card {
+      width: 100%; max-width: 1060px; display: grid; grid-template-columns: 1.05fr 1fr;
+      background: #fff; border-radius: 24px; overflow: hidden;
+      box-shadow: 0 30px 80px -20px rgba(30, 40, 80, .35);
+    }
 
-{% block content %}
-  <h1>登录</h1>
-  {% if form.errors %}
-    <p class="errorlist">用户名或密码不正确，请重试。</p>
-  {% endif %}
-  <form method="post" class="card">
-    {% csrf_token %}
-    <label for="id_username">用户名</label>
-    {{ form.username }}
-    <label for="id_password">密码</label>
-    {{ form.password }}
-    <p><button type="submit">登录</button></p>
-    <input type="hidden" name="next" value="{{ next }}">
-  </form>
-{% endblock %}
+    /* ===== 左侧品牌面板 ===== */
+    .brand {
+      position: relative; padding: 48px 44px; color: #eaeefc;
+      background:
+        radial-gradient(120% 120% at 0% 0%, #5b32d6 0%, transparent 55%),
+        radial-gradient(120% 120% at 100% 100%, #7c3aed 0%, transparent 50%),
+        linear-gradient(160deg, #1b1f3b 0%, #15162e 100%);
+      display: flex; flex-direction: column;
+    }
+    .brand .logo { display: flex; align-items: center; gap: 12px; }
+    .brand .logo img { width: 38px; height: 38px; }
+    .brand .logo span { font-family: "Sora", sans-serif; font-weight: 800; font-size: 1.35rem; letter-spacing: .3px; }
+    .brand .body { margin-top: auto; }
+    .eyebrow { font-size: .72rem; letter-spacing: 3px; color: #9db4ff; font-weight: 700; }
+    .brand h1 { font-family: "Sora", sans-serif; font-size: 2.5rem; line-height: 1.15; margin: 10px 0 14px; font-weight: 800; }
+    .brand h1 .hl { color: #8b9cff; }
+    .brand p.desc { color: #b7bed8; font-size: .95rem; line-height: 1.7; max-width: 30ch; margin: 0; }
+    .bars { display: flex; align-items: flex-end; gap: 5px; height: 70px; margin: 30px 0 26px; }
+    .bars i { flex: 1; background: linear-gradient(180deg, #8b9cff, #5b32d6); border-radius: 3px; opacity: .85; }
+    .stats { display: flex; gap: 26px; }
+    .stats .num { font-family: "Sora", sans-serif; font-size: 1.5rem; font-weight: 800; }
+    .stats .lbl { font-size: .74rem; color: #9aa3c7; margin-top: 2px; }
+
+    /* ===== 右侧登录表单 ===== */
+    .panel { padding: 56px 52px; display: flex; flex-direction: column; justify-content: center; }
+    .panel h2 { font-size: 1.8rem; margin: 0 0 6px; font-weight: 800; }
+    .panel .sub { color: #8a90a2; font-size: .92rem; margin: 0 0 26px; }
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: 8px; color: #3a4150; }
+    .input { position: relative; }
+    .input svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #aab; }
+    .input input {
+      width: 100%; padding: 13px 14px 13px 42px; border: 1.5px solid #e3e6ee; border-radius: 12px;
+      font-size: 1rem; font-family: inherit; background: #f8f9fc; transition: border-color .15s, background .15s;
+    }
+    .input input:focus { outline: none; border-color: #7c3aed; background: #fff; }
+    .row { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 22px; }
+    .remember { display: flex; align-items: center; gap: 8px; font-size: .88rem; color: #5a6172; cursor: pointer; }
+    .remember input { width: 16px; height: 16px; accent-color: #7c3aed; }
+    .btn {
+      width: 100%; padding: 14px; border: 0; border-radius: 12px; cursor: pointer;
+      font-size: 1.02rem; font-weight: 700; letter-spacing: 4px; color: #fff;
+      background: linear-gradient(135deg, #5b32d6 0%, #7c3aed 100%);
+      box-shadow: 0 10px 24px -8px rgba(124, 58, 237, .6); transition: transform .08s, box-shadow .15s;
+    }
+    .btn:hover { box-shadow: 0 14px 30px -8px rgba(124, 58, 237, .7); }
+    .btn:active { transform: translateY(1px); }
+    .err { background: #fde8e8; color: #c0392b; border-radius: 10px; padding: 10px 14px; font-size: .88rem; margin-bottom: 18px; }
+    .note { text-align: center; font-size: .85rem; color: #9aa0b0; margin: 20px 0 0; }
+
+    @media (max-width: 760px) {
+      .card { grid-template-columns: 1fr; max-width: 440px; }
+      .brand { display: none; }
+      .panel { padding: 40px 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <!-- 左:品牌面板 -->
+    <div class="brand">
+      <div class="logo">
+        <img src="{% static 'img/ezra-logo.svg' %}" alt="Ezra">
+        <span>Ezra Studio</span>
+      </div>
+      <div class="body">
+        <div class="eyebrow">BIBLE DATA PLATFORM</div>
+        <h1>数据<span class="hl">收集</span>平台</h1>
+        <p class="desc">为训练贴切解释圣经的 AI,在此收集、标注、审核、导出高质量数据集。多语言 · 多模型 · 专家协作。</p>
+        <div class="bars">
+          <i style="height:40%"></i><i style="height:62%"></i><i style="height:48%"></i><i style="height:80%"></i>
+          <i style="height:55%"></i><i style="height:92%"></i><i style="height:60%"></i><i style="height:74%"></i>
+          <i style="height:45%"></i><i style="height:85%"></i><i style="height:52%"></i><i style="height:68%"></i>
+          <i style="height:96%"></i><i style="height:58%"></i><i style="height:78%"></i><i style="height:50%"></i>
+          <i style="height:64%"></i><i style="height:88%"></i><i style="height:44%"></i><i style="height:72%"></i>
+          <i style="height:56%"></i><i style="height:82%"></i><i style="height:48%"></i><i style="height:66%"></i>
+        </div>
+        <div class="stats">
+          <div><div class="num">3+</div><div class="lbl">起步语言</div></div>
+          <div><div class="num">RAG</div><div class="lbl">导出就绪</div></div>
+          <div><div class="num">100%</div><div class="lbl">专家定稿</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右:登录表单 -->
+    <div class="panel">
+      <h2>登录</h2>
+      <p class="sub">欢迎回来,请登录以继续您的工作。</p>
+
+      {% if form.errors %}
+        <div class="err">用户名或密码不正确,请重试。</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="field">
+          <label for="id_username">用户名</label>
+          <div class="input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" name="username" id="id_username" placeholder="请输入用户名" autofocus required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="id_password">密码</label>
+          <div class="input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" name="password" id="id_password" placeholder="请输入密码" required>
+          </div>
+        </div>
+        <div class="row">
+          <label class="remember"><input type="checkbox" name="remember" checked> 记住我</label>
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn">登 录</button>
+      </form>
+
+      <p class="note">账号由管理员开通,如需账号请联系管理员。</p>
+    </div>
+  </div>
+</body>
+</html>
