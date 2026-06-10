@@ -48,9 +48,11 @@
       {% if user.is_authenticated %}
         <a href="{% url 'corpus:document_list' %}">资料库</a>
         <a href="{% url 'corpus:document_create' %}">＋上传资料</a>
+        <a href="{% url 'corpus:task_list' %}">任务</a>
         {% if user.is_superuser or user.role == 'admin' or user.role == 'lead' %}
           <a href="{% url 'corpus:review_queue' %}">审核队列</a>
         {% endif %}
+        <a href="{% url 'corpus:notification_list' %}">🔔{% if unread_count %} <span class="badge" style="background:#dc2626;color:#fff">{{ unread_count }}</span>{% endif %}</a>
         {% if user.is_superuser or user.role == 'admin' or user.role == 'tech' %}
           <a href="{% url 'corpus:export_page' %}">导出</a>
         {% endif %}

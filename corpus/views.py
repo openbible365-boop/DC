@@ -8,8 +8,9 @@ from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from . import export as export_service
-from .forms import DocumentForm, EntryForm
-from .models import AIModel, Document, Entry, Language, ReviewLog
+from .forms import DocumentForm, EntryForm, TaskForm
+from .models import AIModel, Document, Entry, Language, ReviewLog, Task
+from .notifications import notify
 
 
 def is_reviewer(user):
@@ -36,12 +37,29 @@ def reviewer_required(view):
     return wrapper
 
 
+def can_manage_tasks(user):
+    """谁能分配任务:管理员 / 主任专家(规格书 §8)。"""
+    return user.is_authenticated and (
+        user.is_superuser or user.role in ("admin", "lead")
+    )
+
+
 def export_required(view):
     @wraps(view)
     @login_required
     def wrapper(request, *args, **kwargs):
         if not can_export(request.user):
             raise PermissionDenied("仅管理员或技术人员可触发导出。")
+        return view(request, *args, **kwargs)
+    return wrapper
+
+
+def manage_tasks_required(view):
+    @wraps(view)
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        if not can_manage_tasks(request.user):
+            raise PermissionDenied("仅主任专家或管理员可分配任务。")
         return view(request, *args, **kwargs)
     return wrapper
 
@@ -331,7 +349,15 @@ def review_entry(request, pk):
                     entry=entry, reviewer=request.user,
                     action=ReviewLog.Action.REJECT, comment=comment,
                 )
-                messages.success(request, f"已打回:{entry.verse_ref}(批注已记录)")
+                # 通知标注者:你的条目被打回了
+                notify(
+                    entry.annotated_by,
+                    verb=f"条目「{entry.verse_ref}」被打回",
+                    actor=request.user,
+                    message=comment,
+                    url=f"/corpus/entries/{entry.pk}/edit/",
+                )
+                messages.success(request, f"已打回:{entry.verse_ref}(批注已记录,已通知标注者)")
                 return redirect("corpus:review_queue")
             form = EntryForm(instance=entry)
         else:
@@ -427,3 +453,109 @@ def export_download(request):
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
+
+# ============ 任务分配(规格书 5.6)============
+
+@login_required
+def task_list(request):
+    """任务页:专家看「我的任务」+「任务池」;管理者另见全部任务与创建入口。"""
+    base = Task.objects.select_related("document", "assigned_to", "created_by")
+    my_tasks = base.filter(assigned_to=request.user).exclude(status=Task.Status.DONE)
+    pool = base.filter(
+        is_claimable=True, assigned_to__isnull=True, status=Task.Status.OPEN
+    )
+    context = {
+        "my_tasks": my_tasks,
+        "pool": pool,
+        "can_manage": can_manage_tasks(request.user),
+    }
+    if can_manage_tasks(request.user):
+        context["all_tasks"] = base.all()[:100]
+    return render(request, "corpus/task_list.html", context)
+
+
+@manage_tasks_required
+def task_create(request):
+    """创建任务并(可选)指派给专家;指派则通知对方。"""
+    if request.method == "POST":
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.created_by = request.user
+            if task.assigned_to:
+                task.is_claimable = False
+                task.status = Task.Status.CLAIMED
+            else:
+                task.is_claimable = True
+                task.status = Task.Status.OPEN
+            task.save()
+            if task.assigned_to:
+                notify(
+                    task.assigned_to,
+                    verb=f"你被指派了任务:{task.document.title}",
+                    actor=request.user, message=task.note,
+                    url="/corpus/tasks/",
+                )
+                messages.success(request, f"已指派给 {task.assigned_to}(已通知)。")
+            else:
+                messages.success(request, "已放入任务池,等待认领。")
+            return redirect("corpus:task_list")
+    else:
+        form = TaskForm(initial={"document": request.GET.get("document")})
+    return render(request, "corpus/task_form.html", {"form": form})
+
+
+@login_required
+def task_claim(request, pk):
+    """从任务池认领一个任务。"""
+    task = get_object_or_404(Task, pk=pk)
+    if task.assigned_to is not None or task.status != Task.Status.OPEN:
+        messages.error(request, "该任务已被认领或已关闭。")
+    else:
+        task.assigned_to = request.user
+        task.status = Task.Status.CLAIMED
+        task.save(update_fields=["assigned_to", "status"])
+        notify(
+            task.created_by,
+            verb=f"{request.user} 认领了任务:{task.document.title}",
+            actor=request.user, url="/corpus/tasks/",
+        )
+        messages.success(request, f"已认领:{task.document.title}")
+    return redirect("corpus:task_list")
+
+
+@login_required
+def task_done(request, pk):
+    """标记任务完成(指派对象本人或管理者)。"""
+    task = get_object_or_404(Task, pk=pk)
+    if request.user != task.assigned_to and not can_manage_tasks(request.user):
+        raise PermissionDenied("只有任务负责人或管理者可标记完成。")
+    task.status = Task.Status.DONE
+    task.save(update_fields=["status"])
+    messages.success(request, "任务已标记完成。")
+    return redirect("corpus:task_list")
+
+
+# ============ 站内通知 ============
+
+@login_required
+def notification_list(request):
+    notes = request.user.notifications.select_related("actor").all()[:100]
+    return render(request, "corpus/notifications.html", {"notes": notes})
+
+
+@login_required
+def notification_open(request, pk):
+    """标记单条通知已读并跳转到其关联页面。"""
+    note = get_object_or_404(request.user.notifications, pk=pk)
+    note.is_read = True
+    note.save(update_fields=["is_read"])
+    return redirect(note.url or "corpus:notification_list")
+
+
+@login_required
+def notifications_read_all(request):
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+    messages.success(request, "已全部标记为已读。")
+    return redirect("corpus:notification_list")

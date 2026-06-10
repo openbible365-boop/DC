@@ -204,7 +204,12 @@ class Task(models.Model):
         settings.AUTH_USER_MODEL, verbose_name="指派给", null=True, blank=True,
         on_delete=models.SET_NULL, related_name="tasks",
     )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, verbose_name="创建者", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="created_tasks",
+    )
     is_claimable = models.BooleanField("可认领", default=True)      # True=任务池可认领
+    note = models.TextField("说明", blank=True)
     status = models.CharField(
         "状态", max_length=20, choices=Status.choices, default=Status.OPEN,
     )
@@ -244,3 +249,31 @@ class ReviewLog(models.Model):
 
     def __str__(self):
         return f"{self.get_action_display()} · {self.entry.verse_ref}"
+
+
+# ============ 站内通知 ============
+
+class Notification(models.Model):
+    """站内通知:任务指派、条目打回等事件提醒接收者。"""
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, verbose_name="接收者",
+        on_delete=models.CASCADE, related_name="notifications",
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, verbose_name="触发者", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="+",
+    )
+    verb = models.CharField("事件", max_length=200)        # "指派了任务" / "打回了条目"
+    message = models.TextField("内容", blank=True)
+    url = models.CharField("跳转链接", max_length=300, blank=True)
+    is_read = models.BooleanField("已读", default=False)
+    created_at = models.DateTimeField("时间", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "通知"
+        verbose_name_plural = "通知"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"→{self.recipient}: {self.verb}"

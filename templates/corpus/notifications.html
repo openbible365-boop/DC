@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}通知 · 数据收集协作平台{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center">
+  <h1>通知</h1>
+  <a class="btn btn-ghost" href="{% url 'corpus:notifications_read_all' %}">全部标为已读</a>
+</div>
+
+<div class="card">
+  {% if notes %}
+    <table>
+      <tbody>
+        {% for n in notes %}
+          <tr style="{% if not n.is_read %}font-weight:600{% endif %}">
+            <td style="width:1.2rem">{% if not n.is_read %}🔵{% endif %}</td>
+            <td>
+              <a href="{% url 'corpus:notification_open' n.pk %}">{{ n.verb }}</a>
+              {% if n.message %}<div class="muted" style="font-weight:400">{{ n.message }}</div>{% endif %}
+            </td>
+            <td class="muted" style="font-weight:400; white-space:nowrap">
+              {{ n.actor.username|default:"系统" }} · {{ n.created_at|date:"m-d H:i" }}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">暂无通知。</p>
+  {% endif %}
+</div>
+{% endblock %}

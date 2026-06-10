@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}创建任务 · 数据收集协作平台{% endblock %}
+
+{% block content %}
+<p class="muted"><a href="{% url 'corpus:task_list' %}">← 返回任务</a></p>
+<h1>创建任务</h1>
+<p class="muted">选择资料并指派给某位专家;不指派则放入任务池供认领。指派后会自动通知对方。</p>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  {% for field in form %}
+    <div>
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% for e in field.errors %}<div class="errorlist">{{ e }}</div>{% endfor %}
+    </div>
+  {% endfor %}
+  <div style="margin-top:1.25rem; display:flex; gap:.5rem">
+    <button type="submit">创建任务</button>
+    <a class="btn btn-ghost" href="{% url 'corpus:task_list' %}">取消</a>
+  </div>
+</form>
+{% endblock %}

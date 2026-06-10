@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}任务 · 数据收集协作平台{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center">
+  <h1>任务</h1>
+  {% if can_manage %}<a class="btn" href="{% url 'corpus:task_create' %}">＋ 创建任务</a>{% endif %}
+</div>
+
+<div class="card">
+  <h3>我的任务</h3>
+  {% if my_tasks %}
+    <table>
+      <thead><tr><th>资料</th><th>说明</th><th>状态</th><th></th></tr></thead>
+      <tbody>
+        {% for t in my_tasks %}
+          <tr>
+            <td><a href="{% url 'corpus:document_detail' t.document.pk %}">{{ t.document.title }}</a></td>
+            <td class="muted">{{ t.note|default:"—" }}</td>
+            <td><span class="badge">{{ t.get_status_display }}</span></td>
+            <td>
+              <a href="{% url 'corpus:entry_create' t.document.pk %}">去标注</a> ·
+              <a href="{% url 'corpus:task_done' t.pk %}">标记完成</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}<p class="muted">暂无指派给你的任务。</p>{% endif %}
+</div>
+
+<div class="card">
+  <h3>任务池 <span class="muted">(可认领)</span></h3>
+  {% if pool %}
+    <table>
+      <thead><tr><th>资料</th><th>说明</th><th>创建者</th><th></th></tr></thead>
+      <tbody>
+        {% for t in pool %}
+          <tr>
+            <td><a href="{% url 'corpus:document_detail' t.document.pk %}">{{ t.document.title }}</a></td>
+            <td class="muted">{{ t.note|default:"—" }}</td>
+            <td class="muted">{{ t.created_by.get_full_name|default:t.created_by.username|default:"—" }}</td>
+            <td><a class="btn" href="{% url 'corpus:task_claim' t.pk %}">认领</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}<p class="muted">任务池为空。</p>{% endif %}
+</div>
+
+{% if can_manage %}
+<div class="card">
+  <h3>全部任务 <span class="muted">(管理者视图)</span></h3>
+  {% if all_tasks %}
+    <table>
+      <thead><tr><th>资料</th><th>指派给</th><th>状态</th><th>创建者</th><th>创建时间</th></tr></thead>
+      <tbody>
+        {% for t in all_tasks %}
+          <tr>
+            <td><a href="{% url 'corpus:document_detail' t.document.pk %}">{{ t.document.title }}</a></td>
+            <td>{{ t.assigned_to.get_full_name|default:t.assigned_to.username|default:"（任务池）" }}</td>
+            <td><span class="badge">{{ t.get_status_display }}</span></td>
+            <td class="muted">{{ t.created_by.username|default:"—" }}</td>
+            <td class="muted">{{ t.created_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}<p class="muted">还没有任何任务。</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

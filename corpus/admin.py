@@ -4,6 +4,7 @@ from .models import (
     AIModel,
     Document,
     Entry,
+    Notification,
     ReviewLog,
     Task,
     Theologian,
@@ -68,8 +69,15 @@ class EntryAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "assigned_to", "is_claimable", "status", "created_at")
+    list_display = ("__str__", "assigned_to", "created_by", "is_claimable", "status", "created_at")
     list_filter = ("status", "is_claimable")
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("recipient", "verb", "actor", "is_read", "created_at")
+    list_filter = ("is_read",)
+    search_fields = ("verb", "message")
 
 
 @admin.register(ReviewLog)

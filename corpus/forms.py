@@ -1,6 +1,9 @@
 from django import forms
+from django.contrib.auth import get_user_model
 
-from .models import AIModel, Document, Entry, TranslationGroup
+from .models import AIModel, Document, Entry, Task, TranslationGroup
+
+User = get_user_model()
 
 
 def _parse_tags(text):
@@ -107,3 +110,26 @@ class EntryForm(forms.ModelForm):
         if commit:
             obj.save()
         return obj
+
+
+class TaskForm(forms.ModelForm):
+    """创建任务(规格书 5.6)。
+
+    指派给某专家;留空则进入可认领任务池(is_claimable=True)。
+    """
+
+    class Meta:
+        model = Task
+        fields = ["document", "assigned_to", "note"]
+        widgets = {
+            "note": forms.Textarea(attrs={"rows": 2, "placeholder": "任务说明(可选),如:请优先处理前三章"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["assigned_to"].queryset = User.objects.filter(
+            is_active=True, role__in=["expert", "lead"]
+        ).order_by("username")
+        self.fields["assigned_to"].required = False
+        self.fields["assigned_to"].label = "指派给(留空=放入任务池)"
+        self.fields["document"].queryset = Document.objects.order_by("-created_at")
