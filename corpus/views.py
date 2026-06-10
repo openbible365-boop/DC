@@ -47,6 +47,74 @@ def export_required(view):
 
 
 @login_required
+def dashboard(request):
+    """仪表盘(规格书 5.8):全局数据量、审核进度、各模型产出、质量分布。"""
+
+    def counts_by(model, field, choices):
+        raw = dict(
+            model.objects.values_list(field).annotate(c=Count("pk"))
+        )
+        return [
+            {"value": v, "label": label, "count": raw.get(v, 0)}
+            for v, label in choices
+        ]
+
+    doc_total = Document.objects.count()
+    entry_total = Entry.objects.count()
+    doc_status = counts_by(Document, "status", Document.Status.choices)
+    entry_status = counts_by(Entry, "status", Entry.Status.choices)
+    approved_total = next(
+        (s["count"] for s in entry_status if s["value"] == Entry.Status.APPROVED), 0
+    )
+
+    # 各模型:已通过 / 总条目
+    models = list(
+        AIModel.objects.filter(is_active=True).annotate(
+            approved_count=Count(
+                "documents__entries",
+                filter=Q(documents__entries__status=Entry.Status.APPROVED),
+                distinct=True,
+            ),
+            entry_count=Count("documents__entries", distinct=True),
+        )
+    )
+
+    # 质量分布(仅已通过且有评分)
+    buckets = [
+        ("优 ≥0.85", 0.85, 1.01),
+        ("良 0.7–0.85", 0.70, 0.85),
+        ("中 0.5–0.7", 0.50, 0.70),
+        ("低 <0.5", -0.01, 0.50),
+    ]
+    quality = []
+    scored = Entry.objects.filter(
+        status=Entry.Status.APPROVED, quality_score__isnull=False
+    )
+    for label, lo, hi in buckets:
+        quality.append({
+            "label": label,
+            "count": scored.filter(
+                quality_score__gte=lo, quality_score__lt=hi
+            ).count(),
+        })
+    unscored = Entry.objects.filter(
+        status=Entry.Status.APPROVED, quality_score__isnull=True
+    ).count()
+
+    return render(request, "corpus/dashboard.html", {
+        "doc_total": doc_total,
+        "entry_total": entry_total,
+        "approved_total": approved_total,
+        "doc_status": doc_status,
+        "entry_status": entry_status,
+        "models": models,
+        "quality": quality,
+        "unscored": unscored,
+        "max_model_count": max([m.entry_count for m in models], default=0),
+    })
+
+
+@login_required
 def document_list(request):
     """资料列表,支持按状态 / 语言 / 目标模型筛选。"""
     docs = (

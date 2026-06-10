@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}仪表盘 · 数据收集协作平台{% endblock %}
+
+{% block content %}
+<style>
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .stat { text-align: center; padding: 1.25rem; }
+  .stat .num { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+  .stat .lbl { color: #8889; font-size: .9rem; margin-top: .3rem; }
+  .bar { height: 22px; border-radius: 5px; background: #2563eb; min-width: 2px; }
+  .bar-row { display: grid; grid-template-columns: 7rem 1fr 3rem; gap: .6rem;
+             align-items: center; margin: .35rem 0; }
+  .bar-row .v { text-align: right; font-variant-numeric: tabular-nums; }
+  .seg { display: flex; height: 26px; border-radius: 6px; overflow: hidden; margin:.5rem 0; }
+  .seg span { display: flex; align-items: center; justify-content: center;
+              color: #fff; font-size: .78rem; white-space: nowrap; }
+  @media (max-width: 720px) { .stats { grid-template-columns: 1fr; } }
+</style>
+
+<h1>仪表盘</h1>
+<p class="muted">「敏捷地运用神的话语,为世人指一条明路,一条通达的道路。」</p>
+
+<div class="card stats">
+  <div class="stat"><div class="num">{{ doc_total }}</div><div class="lbl">资料总数</div></div>
+  <div class="stat"><div class="num">{{ entry_total }}</div><div class="lbl">条目总数</div></div>
+  <div class="stat"><div class="num" style="color:#22c55e">{{ approved_total }}</div><div class="lbl">已通过(可导出)</div></div>
+</div>
+
+<div class="card">
+  <h3>条目审核进度</h3>
+  {% for s in entry_status %}
+    <div class="bar-row">
+      <span class="badge {{ s.value }}">{{ s.label }}</span>
+      <div class="bar" style="width: {% widthratio s.count entry_total 100 %}%"></div>
+      <span class="v">{{ s.count }}</span>
+    </div>
+  {% endfor %}
+  {% if not entry_total %}<p class="muted">暂无条目。</p>{% endif %}
+</div>
+
+<div class="card">
+  <h3>资料状态分布</h3>
+  {% for s in doc_status %}
+    <div class="bar-row">
+      <span class="badge {{ s.value }}">{{ s.label }}</span>
+      <div class="bar" style="width: {% widthratio s.count doc_total 100 %}%; background:#a855f7"></div>
+      <span class="v">{{ s.count }}</span>
+    </div>
+  {% endfor %}
+  {% if not doc_total %}<p class="muted">暂无资料。</p>{% endif %}
+</div>
+
+<div class="card">
+  <h3>各模型产出</h3>
+  <table>
+    <thead><tr><th>模型</th><th>代号</th><th>语言</th><th>已通过</th><th>总条目</th></tr></thead>
+    <tbody>
+      {% for m in models %}
+        <tr>
+          <td>{{ m.name }}</td>
+          <td class="muted">{{ m.code }}</td>
+          <td>{{ m.get_language_display }}</td>
+          <td style="color:#22c55e">{{ m.approved_count }}</td>
+          <td class="muted">{{ m.entry_count }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="muted">尚无启用的模型。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3>质量分布 <span class="muted">(已通过条目)</span></h3>
+  {% for q in quality %}
+    <div class="bar-row">
+      <span>{{ q.label }}</span>
+      <div class="bar" style="width: {% widthratio q.count approved_total 100 %}%; background:#16a34a"></div>
+      <span class="v">{{ q.count }}</span>
+    </div>
+  {% endfor %}
+  {% if unscored %}<p class="muted">另有 {{ unscored }} 条已通过但未评分。</p>{% endif %}
+  {% if not approved_total %}<p class="muted">暂无已通过条目。</p>{% endif %}
+</div>
+{% endblock %}

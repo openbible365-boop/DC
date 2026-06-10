@@ -1,8 +1,3 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render  # noqa: F401
 
-
-@login_required
-def home(request):
-    """登录后的首页占位。后续阶段会替换为仪表盘(规格书 5.8)。"""
-    return render(request, "home.html")
+# 首页已由 corpus.views.dashboard 接管(规格书 5.8 仪表盘)。
