@@ -1,8 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="22 8 76 72" fill="none" role="img" aria-label="Ezra">
   <polygon points="60,13 62,21 70,23 62,25 60,33 58,25 50,23 58,21" fill="#e89a2c"/>
-  <polygon points="43,24.5 44.1,28.9 48.5,30 44.1,31.1 43,35.5 41.9,31.1 37.5,30 41.9,28.9" fill="#ffffff"/>
-  <polygon points="77,22 78.2,26.8 83,28 78.2,29.2 77,34 75.8,29.2 71,28 75.8,26.8" fill="#ffffff"/>
-  <path d="M60 44 C 50 38, 34 38, 26 44 L 26 74 C 34 68, 50 68, 60 74 Z" fill="none" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
-  <path d="M60 44 C 70 38, 86 38, 94 44 L 94 74 C 86 68, 70 68, 60 74 Z" fill="none" stroke="#ffffff" stroke-width="5" stroke-linejoin="round"/>
-  <line x1="60" y1="44" x2="60" y2="74" stroke="#ffffff" stroke-width="4"/>
+  <path d="M60 44 C 50 38, 34 38, 26 44 L 26 74 C 34 68, 50 68, 60 74 Z" fill="none" stroke="#ffffff" stroke-width="5"/>
+  <path d="M60 44 C 70 38, 86 38, 94 44 L 94 74 C 86 68, 70 68, 60 74 Z" fill="none" stroke="#ffffff" stroke-width="5"/>
 </svg>
